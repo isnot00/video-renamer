@@ -1,0 +1,25 @@
+package ui
+
+import "fmt"
+
+const Version = "1.0.0"
+
+func PrintBanner() {
+
+	fmt.Println(Cyan + Bold + `
+██╗   ██╗██╗██████╗ ███████╗ ██████╗
+██║   ██║██║██╔══██╗██╔════╝██╔═══██╗
+██║   ██║██║██║  ██║█████╗  ██║   ██║
+╚██╗ ██╔╝██║██║  ██║██╔══╝  ██║   ██║
+ ╚████╔╝ ██║██████╔╝███████╗╚██████╔╝
+  ╚═══╝  ╚═╝╚═════╝ ╚══════╝ ╚═════╝
+` + Reset)
+
+	fmt.Printf(
+		"%s🎬 Video Renamer%s %sv%s\n\n",
+		Green,
+		Reset,
+		Yellow,
+		Version,
+	)
+}
