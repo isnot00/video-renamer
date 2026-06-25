@@ -15,26 +15,32 @@ var SupportedExtensions = map[string]struct{}{
 }
 
 func ScanDirectory(dir string) ([]string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
 
 	var files []string
 
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
+	err := filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
+
+		if err != nil {
+			return err
 		}
 
-		ext := strings.ToLower(filepath.Ext(entry.Name()))
+		if d.IsDir() {
+			return nil
+		}
+
+		ext := strings.ToLower(filepath.Ext(d.Name()))
 
 		if _, ok := SupportedExtensions[ext]; !ok {
-			continue
+			return nil
 		}
 
-		fullPath := filepath.Join(dir, entry.Name())
-		files = append(files, fullPath)
+		files = append(files, path)
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return files, nil

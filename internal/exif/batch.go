@@ -4,47 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+
 	"os/exec"
 	"path/filepath"
-	"time"
-
 	"renamer/internal/model"
+	"time"
 )
-
-func mapToVideos(
-	data []exifData,
-	pathMap map[string]string,
-) ([]model.Video, error) {
-
-	var videos []model.Video
-
-	for _, item := range data {
-
-		t, err := selectTimestamp(item)
-		if err != nil {
-			continue
-		}
-
-		realPath, ok := pathMap[filepath.Base(item.SourceFile)]
-
-		if !ok {
-			continue
-		}
-
-		videos = append(videos, model.Video{
-			Path:      realPath,
-			Name:      filepath.Base(realPath),
-			Extension: filepath.Ext(realPath),
-			Time:      t,
-		})
-	}
-
-	if len(videos) == 0 {
-		return nil, errors.New("no valid videos found")
-	}
-
-	return videos, nil
-}
 
 func ReadVideos(paths []string) ([]model.Video, error) {
 
@@ -54,27 +20,9 @@ func ReadVideos(paths []string) ([]model.Video, error) {
 
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		20*time.Second,
+		30*time.Second,
 	)
 	defer cancel()
-
-	pathMap := make(map[string]string)
-
-	var absolutePaths []string
-
-	for _, p := range paths {
-
-		abs, err := filepath.Abs(p)
-		if err != nil {
-			return nil, err
-		}
-
-		pathMap[filepath.Base(abs)] = abs
-		absolutePaths = append(
-			absolutePaths,
-			abs,
-		)
-	}
 
 	args := []string{
 		"-j",
@@ -84,7 +32,7 @@ func ReadVideos(paths []string) ([]model.Video, error) {
 		"-FileModifyDate",
 	}
 
-	args = append(args, absolutePaths...)
+	args = append(args, paths...)
 
 	cmd := exec.CommandContext(
 		ctx,
@@ -92,27 +40,46 @@ func ReadVideos(paths []string) ([]model.Video, error) {
 		args...,
 	)
 
-	output, err := cmd.CombinedOutput()
+	output, err := cmd.Output()
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return nil, errors.New("ExifTool timed out")
+	}
+
 	if err != nil {
-
-		if len(output) > 0 {
-			return nil, errors.New(string(output))
-		}
-
 		return nil, err
 	}
 
 	var result []exifData
 
-	if err := json.Unmarshal(
-		output,
-		&result,
-	); err != nil {
-		return nil, err
+	if err := json.Unmarshal(output, &result); err != nil {
+
+		return nil, fmt.Errorf(
+			"failed to parse ExifTool JSON (debug-exif.json created): %w",
+			err,
+		)
 	}
 
-	return mapToVideos(
-		result,
-		pathMap,
-	)
+	var videos []model.Video
+
+	for _, item := range result {
+
+		timestamp, err := selectTimestamp(item)
+		if err != nil {
+			continue
+		}
+
+		videos = append(videos, model.Video{
+			Path:      item.SourceFile,
+			Name:      filepath.Base(item.SourceFile),
+			Extension: filepath.Ext(item.SourceFile),
+			Time:      timestamp,
+		})
+	}
+
+	if len(videos) == 0 {
+		return nil, errors.New("no valid videos found")
+	}
+
+	return videos, nil
 }

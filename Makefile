@@ -1,26 +1,48 @@
 APP_NAME=video-renamer
+VERSION=v1.0.0
+LDFLAGS=-ldflags "-X renamer/internal/ui.Version=$(VERSION)"
+
+ifeq ($(OS),Windows_NT)
+
+EXE=.exe
 
 build:
-	go build -o bin/$(APP_NAME) ./cmd
+	go build $(LDFLAGS) -o bin/$(APP_NAME)$(EXE) ./cmd
 
 windows:
-	GOOS=windows GOARCH=amd64 go build -o bin/$(APP_NAME).exe ./cmd
+	go build $(LDFLAGS) -o bin/$(APP_NAME).exe ./cmd
 
 linux:
-	GOOS=linux GOARCH=amd64 go build -o bin/$(APP_NAME)-linux ./cmd
+	cmd /C "set GOOS=linux&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/$(APP_NAME)-linux ./cmd"
 
 mac:
-	GOOS=darwin GOARCH=amd64 go build -o bin/$(APP_NAME)-mac ./cmd
+	cmd /C "set GOOS=darwin&& set GOARCH=amd64&& go build $(LDFLAGS) -o bin/$(APP_NAME)-mac ./cmd"
 
-release:
-	mkdir -p bin
-	GOOS=windows GOARCH=amd64 go build -o bin/$(APP_NAME).exe ./cmd
-	GOOS=linux GOARCH=amd64 go build -o bin/$(APP_NAME)-linux ./cmd
-	GOOS=darwin GOARCH=amd64 go build -o bin/$(APP_NAME)-mac ./cmd
-	-ldflags "-X renamer/internal/version.Version=v1.0.0"
+release: windows linux mac
 
-test:
-	go test ./...
+clean:
+	if exist bin rmdir /S /Q bin
+
+else
+
+build:
+	go build $(LDFLAGS) -o bin/$(APP_NAME) ./cmd
+
+windows:
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/$(APP_NAME).exe ./cmd
+
+linux:
+	GOOS=linux GOARCH=amd64 go build $(LDFLAGS) -o bin/$(APP_NAME)-linux ./cmd
+
+mac:
+	GOOS=darwin GOARCH=amd64 go build $(LDFLAGS) -o bin/$(APP_NAME)-mac ./cmd
+
+release: windows linux mac
 
 clean:
 	rm -rf bin
+
+endif
+
+test:
+	go test ./...

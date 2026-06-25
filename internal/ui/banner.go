@@ -2,7 +2,7 @@ package ui
 
 import "fmt"
 
-const Version = "1.0.0"
+var Version = "dev"
 
 func PrintBanner() {
 

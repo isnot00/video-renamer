@@ -15,12 +15,15 @@ func SortVideos(videos []model.Video) {
 }
 
 func GenerateNames(videos []model.Video) {
+
 	for i := range videos {
+
 		videos[i].TargetName = fmt.Sprintf(
 			"%04d%s",
 			i+1,
 			videos[i].Extension,
 		)
+
 	}
 }
 
@@ -30,6 +33,12 @@ func ValidateTargets(videos []model.Video) error {
 
 	for _, video := range videos {
 
+		if video.TargetName == "" {
+			return fmt.Errorf(
+				"internal error: target name was not generated",
+			)
+		}
+
 		finalPath := filepath.Join(
 			filepath.Dir(video.Path),
 			video.TargetName,
@@ -37,12 +46,13 @@ func ValidateTargets(videos []model.Video) error {
 
 		if _, exists := targets[finalPath]; exists {
 			return fmt.Errorf(
-				"duplicate target generated: %s",
+				"duplicate target generated:\n%s",
 				finalPath,
 			)
 		}
 
 		targets[finalPath] = struct{}{}
+
 	}
 
 	return nil
@@ -51,29 +61,32 @@ func ValidateTargets(videos []model.Video) error {
 func PrintPreview(videos []model.Video) {
 
 	fmt.Println()
+
 	fmt.Printf(
-		"%-30s %-20s\n",
-		"OLD FILE",
-		"NEW FILE",
+		"%-35s -> %s\n",
+		"CURRENT NAME",
+		"NEW NAME",
 	)
 
-	fmt.Println(
-		"────────────────────────────────────────────",
-	)
+	fmt.Println("----------------------------------------------------------------")
 
 	for _, v := range videos {
 
 		fmt.Printf(
-			"%-30s %-20s\n",
+			"%-35s -> %s\n",
 			v.Name,
 			v.TargetName,
 		)
+
 	}
 
 	fmt.Println()
 }
 
-func Rename(videos []model.Video, dryRun bool) error {
+func Rename(videos []model.Video) error {
+
+	// مرحله اول
+	// همه فایل‌ها به اسم موقت تغییر می‌کنند
 
 	for i := range videos {
 
@@ -82,31 +95,25 @@ func Rename(videos []model.Video, dryRun bool) error {
 		tmpPath := filepath.Join(
 			dir,
 			fmt.Sprintf(
-				"__video_renamer_tmp_%d_%s",
+				"__video_renamer_tmp_%d%s",
 				i,
-				videos[i].Name,
+				videos[i].Extension,
 			),
 		)
 
-		if dryRun {
-			fmt.Printf(
-				"[DRY RUN] %s -> %s\n",
-				videos[i].Name,
-				videos[i].TargetName,
-			)
-			continue
-		}
-
-		if err := os.Rename(videos[i].Path, tmpPath); err != nil {
+		if err := os.Rename(
+			videos[i].Path,
+			tmpPath,
+		); err != nil {
 			return err
 		}
 
 		videos[i].Path = tmpPath
+
 	}
 
-	if dryRun {
-		return nil
-	}
+	// مرحله دوم
+	// اسم نهایی
 
 	for i := range videos {
 
@@ -123,6 +130,7 @@ func Rename(videos []model.Video, dryRun bool) error {
 		); err != nil {
 			return err
 		}
+
 	}
 
 	return nil
