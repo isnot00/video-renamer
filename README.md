@@ -1,3 +1,7 @@
+![Go](https://img.shields.io/badge/Go-1.26-blue?logo=go)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-orange)
+
 # 🎬 Video Renamer
 
 A lightweight CLI tool written in Go that renames video files based on their actual capture date using ExifTool metadata.
@@ -60,7 +64,28 @@ Rename files:
 ```bash
 video-renamer --dir ./videos
 ```
+## Build
 
-## License
+Build the current platform:
 
-MIT
+```bash
+make build
+```
+
+Build for Windows:
+
+```bash
+make windows
+```
+
+Build for Linux:
+
+```bash
+make linux
+```
+
+Build all targets:
+
+```bash
+make release
+```
