@@ -4,14 +4,18 @@
 
 # 🎬 Video Renamer
 
-A lightweight CLI tool written in Go that renames video files based on their actual capture date using ExifTool metadata.
+A fast Go CLI that renames videos using their **actual capture date** extracted from **ExifTool metadata**, not filenames or file modification dates.
 
-Instead of relying on filenames, videos are sorted chronologically and renamed sequentially.
+<p align="center">
+  <img src="assets/Screenshot.png" width="900">
+</p>
+
+
 
 ```text
-VID_8452.mp4 → 0001.mp4
-VID_8453.mp4 → 0002.mp4
-VID_8454.mp4 → 0003.mp4
+VID_8452.mp4  →  0001.mp4
+VID_8453.mp4  →  0002.mp4
+VID_8454.mp4  →  0003.mp4
 ```
 
 ## Features
